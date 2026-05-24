@@ -25,10 +25,11 @@ func main() {
 	kafkaTopic := "bid-events"
 
 	// Redis 클라이언트 생성
+	// [튜닝 1] Redis 커넥션 풀 확장 (2000 동시 접속 대비)
 	rdb := redis.NewClient(&redis.Options{
 		Addr:         redisAddr,
-		PoolSize:     100,             // 초저지연 대용량 커넥션 풀 확보
-		MinIdleConns: 20,              // 최소 유휴 커넥션 유지로 지연 방지
+		PoolSize:     2500, // 최대 VUs(2000)보다 넉넉하게 설정
+        MinIdleConns: 500,  // 유휴 커넥션을 많이 유지하여 맺는 시간 단축
 	})
 
 	// Redis 연결 확인을 위한 Ping (정상 구동 상태 확인 타임아웃 2초 지정)
@@ -48,11 +49,13 @@ func main() {
 	bidUsecase := usecase.NewBidUsecase(budgetRepo, kafkaProducer)
 
 	// 초저지연 전용 타임아웃 튜닝이 반영된 Fiber 어플리케이션 선언
+    // [튜닝 2 & 3] HTTP 서버 소켓 설정 완화
 	app := fiber.New(fiber.Config{
-		ReadTimeout:  15 * time.Millisecond,
-		WriteTimeout: 15 * time.Millisecond,
+		ReadTimeout:  time.Second * 2,  // 네트워크 패킷 읽기 타임아웃은 넉넉하게
+		WriteTimeout: time.Second * 2,  // 응답 쓰기 타임아웃도 넉넉하게
+		IdleTimeout:  time.Second * 10, // Keep-Alive 유휴 커넥션 유지 시간
+		DisableKeepalive: false,        // Keep-Alive 강제 활성화
 	})
-
 	// API 엔드포인트 그룹화 및 핸들러 등록
 	apiV1 := app.Group("/api/v1")
 	http.NewBidHandler(apiV1, bidUsecase)

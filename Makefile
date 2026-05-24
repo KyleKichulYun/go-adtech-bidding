@@ -11,3 +11,9 @@ compose-down:
 # Go 입찰 서버 실행
 run:
 	go run cmd/bidder/main.go
+
+.PHONY: load-test
+
+# k6 부하 테스트 실행
+load-test:
+	k6 run scripts/k6/load_test.js
