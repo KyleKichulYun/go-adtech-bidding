@@ -22,3 +22,19 @@ type BidResponse struct {
 type BidUsecase interface {
 	ProcessBid(ctx context.Context, req *BidRequest) (*BidResponse, error)
 }
+
+// BidEvent는 Kafka로 발행할 불변의 기록 데이터 모델입니다.
+type BidEvent struct {
+	BidID      string `json:"bid_id"`
+	CampaignID string `json:"campaign_id"`
+	Price      int64  `json:"price"`
+	DeviceID   string `json:"device_id"`
+	IsSuccess  bool   `json:"is_success"`
+	Timestamp  int64  `json:"timestamp"`
+}
+
+// BidEventRepository는 Kafka 이벤트 발행을 정의하는 인터페이스입니다.
+type BidEventRepository interface {
+	PublishBidEvent(ctx context.Context, event *BidEvent) error
+	Close() error
+}
