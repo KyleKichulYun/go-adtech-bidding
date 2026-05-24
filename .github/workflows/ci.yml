@@ -1,0 +1,41 @@
+# .github/workflows/ci.yml
+name: Go CI Pipeline
+
+# 파이프라인이 실행될 조건 (main 브랜치에 Push 되거나 PR이 생성될 때)
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. 깃허브 리포지토리의 코드를 가상 환경으로 가져옵니다.
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    # 2. Go 환경을 세팅합니다. (캐시를 활성화하여 다음 빌드부터 속도를 크게 높입니다.)
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.26' # go.mod 버전에 맞춤
+        cache: true
+
+    # 3. 의존성 패키지를 다운로드합니다.
+    - name: Download Dependencies
+      run: go mod download
+
+    # 4. 코드 포맷팅이 표준(gofmt)에 맞게 잘 되어 있는지 검사합니다.
+    - name: Verify Code Formatting
+      run: if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then echo "Go code is not formatted. Run 'go fmt ./...'" && exit 1; fi
+
+    # 5. 잠재적인 버그나 의심스러운 구조가 없는지 정적 분석(vet)을 수행합니다.
+    - name: Run Go Vet
+      run: go vet ./...
+
+    # 6. 최종적으로 서버가 정상적으로 컴파일 및 빌드되는지 확인합니다.
+    - name: Build Application
+      run: go build -v ./cmd/bidder/...
