@@ -29,7 +29,7 @@ func main() {
 	rdb := redis.NewClient(&redis.Options{
 		Addr:         redisAddr,
 		PoolSize:     2500, // 최대 VUs(2000)보다 넉넉하게 설정
-        MinIdleConns: 500,  // 유휴 커넥션을 많이 유지하여 맺는 시간 단축
+		MinIdleConns: 500,  // 유휴 커넥션을 많이 유지하여 맺는 시간 단축
 	})
 
 	// Redis 연결 확인을 위한 Ping (정상 구동 상태 확인 타임아웃 2초 지정)
@@ -49,12 +49,12 @@ func main() {
 	bidUsecase := usecase.NewBidUsecase(budgetRepo, kafkaProducer)
 
 	// 초저지연 전용 타임아웃 튜닝이 반영된 Fiber 어플리케이션 선언
-    // [튜닝 2 & 3] HTTP 서버 소켓 설정 완화
+	// [튜닝 2 & 3] HTTP 서버 소켓 설정 완화
 	app := fiber.New(fiber.Config{
-		ReadTimeout:  time.Second * 2,  // 네트워크 패킷 읽기 타임아웃은 넉넉하게
-		WriteTimeout: time.Second * 2,  // 응답 쓰기 타임아웃도 넉넉하게
-		IdleTimeout:  time.Second * 10, // Keep-Alive 유휴 커넥션 유지 시간
-		DisableKeepalive: false,        // Keep-Alive 강제 활성화
+		ReadTimeout:      time.Second * 2,  // 네트워크 패킷 읽기 타임아웃은 넉넉하게
+		WriteTimeout:     time.Second * 2,  // 응답 쓰기 타임아웃도 넉넉하게
+		IdleTimeout:      time.Second * 10, // Keep-Alive 유휴 커넥션 유지 시간
+		DisableKeepalive: false,            // Keep-Alive 강제 활성화
 	})
 	// API 엔드포인트 그룹화 및 핸들러 등록
 	apiV1 := app.Group("/api/v1")
@@ -85,11 +85,11 @@ func main() {
 	if err := app.ShutdownWithContext(shutdownCtx); err != nil {
 		log.Printf("Fiber HTTP server shutdown error: %v", err)
 	}
-	
+
 	if err := rdb.Close(); err != nil {
 		log.Printf("Redis client connection pool close error: %v", err)
 	}
-	
+
 	if err := kafkaProducer.Close(); err != nil {
 		log.Printf("Kafka producer flush & close error: %v", err)
 	}
