@@ -16,6 +16,8 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/redis/go-redis/v9"
+
+	"github.com/ansrivas/fiberprometheus/v2"
 )
 
 func main() {
@@ -56,6 +58,13 @@ func main() {
 		IdleTimeout:      time.Second * 10, // Keep-Alive 유휴 커넥션 유지 시간
 		DisableKeepalive: false,            // Keep-Alive 강제 활성화
 	})
+
+    // 🌟 [추가] Prometheus 미들웨어 세팅
+	// "adtech_bidder"라는 이름으로 메트릭을 수집하고, /metrics 주소로 노출합니다.
+	prometheus := fiberprometheus.New("adtech_bidder")
+	prometheus.RegisterAt(app, "/metrics")
+	app.Use(prometheus.Middleware) // 반드시 라우터 세팅 전에 미들웨어로 등록해야 합니다.
+
 	// API 엔드포인트 그룹화 및 핸들러 등록
 	apiV1 := app.Group("/api/v1")
 	http.NewBidHandler(apiV1, bidUsecase)
