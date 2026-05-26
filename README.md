@@ -1,4 +1,4 @@
-```markdown
+
 # 🚀 go-adtech-bidding (Ultra-Low Latency RTB Engine)
 
 ![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go)
